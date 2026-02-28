@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Smart Attendance System</title>
+
+<style>
+    body {
+        margin: 0;
+        height: 100vh;
+        background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+        font-family: "Segoe UI", Arial, sans-serif;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+    }
+
+    .card {
+        background: rgba(255, 255, 255, 0.12);
+        backdrop-filter: blur(10px);
+        padding: 40px;
+        border-radius: 15px;
+        width: 360px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        text-align: center;
+    }
+
+    h1 {
+        margin-bottom: 10px;
+        font-size: 24px;
+    }
+
+    p {
+        font-size: 14px;
+        opacity: 0.85;
+        margin-bottom: 25px;
+    }
+
+    input {
+        width: 100%;
+        padding: 12px;
+        border-radius: 8px;
+        border: none;
+        font-size: 16px;
+        outline: none;
+        margin-bottom: 15px;
+    }
+
+    button {
+        width: 100%;
+        padding: 12px;
+        border: none;
+        border-radius: 8px;
+        background: linear-gradient(to right, #0072ff, #00c6ff);
+        color: white;
+        font-size: 16px;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+
+    button:hover {
+        transform: scale(1.03);
+    }
+
+    #msg, #crMsg {
+        margin-top: 15px;
+        font-weight: bold;
+        font-size: 14px;
+    }
+
+    .divider {
+        margin: 25px 0;
+        height: 1px;
+        background: rgba(255,255,255,0.3);
+    }
+
+    .footer {
+        margin-top: 20px;
+        font-size: 12px;
+        opacity: 0.7;
+    }
+</style>
+</head>
+
+<body>
+
+<div class="card">
+    <h1>📍 Smart Attendance</h1>
+    <p>Location-Based Attendance System</p>
+
+    <!-- STUDENT SECTION -->
+    <input type="text" id="regNo" placeholder="Enter Registration Number">
+    <button onclick="markAttendance()">Mark Attendance</button>
+    <div id="msg"></div>
+
+    <div class="divider"></div>
+
+    <!-- CR LOGIN SECTION -->
+    <h3>🧑‍🏫 CR Login</h3>
+    <input type="password" id="crPass" placeholder="Enter CR Password">
+    <button onclick="crLogin()">View Attendance</button>
+    <div id="crMsg"></div>
+
+    <div class="footer">
+        © 2026 Campus Attendance System
+    </div>
+</div>
+
+<script>
+function markAttendance() {
+    const regNo = document.getElementById("regNo").value.trim();
+    const msg = document.getElementById("msg");
+
+    if (!regNo) {
+        msg.innerText = "Please enter registration number ❗";
+        msg.style.color = "orange";
+        return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+        pos => {
+            fetch("/mark", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({
+                    regNo: regNo,
+                    lat: pos.coords.latitude,
+                    lon: pos.coords.longitude
+                })
+            })
+            .then(r => r.json())
+            .then(d => {
+                msg.innerText = d.message;
+                msg.style.color = d.message.includes("success") ? "lightgreen" : "salmon";
+            });
+        },
+        () => {
+            msg.innerText = "Please allow location access ❌";
+            msg.style.color = "red";
+        }
+    );
+}
+
+function crLogin() {
+    const pass = document.getElementById("crPass").value;
+    const msg = document.getElementById("crMsg");
+
+    fetch("/cr-login", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({password: pass})
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (d.success) {
+            window.location.href = "/cr-report";
+        } else {
+            msg.innerText = d.message;
+            msg.style.color = "salmon";
+        }
+    });
+}
+</script>
+
+</body>
+</html>
